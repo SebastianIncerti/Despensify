@@ -36,6 +36,15 @@ h2{font-size:1.25rem}
 .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .brand h1{font-size:2rem}
 .brand h1.logo{display:flex;align-items:center;gap:10px}
+.casa-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px 5px 12px;font-weight:600;font-size:.88rem;cursor:pointer;max-width:200px;min-height:34px}
+.casa-btn:hover{border-color:#cfc5ae}
+.casa-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.casa-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f0eadc}
+.casa-row .casa-name{flex:1;width:0;border:1px solid transparent;background:transparent;border-radius:8px;padding:8px;font-weight:600}
+.casa-row .casa-name:hover{border-color:var(--line)}
+.casa-row .casa-name:focus{border-color:var(--accent);background:#fff;outline:none}
+.casa-row.on .casa-name{color:var(--accent)}
+.casa-cur{font-size:.78rem;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .brand h1.logo svg{color:var(--accent);flex-shrink:0}
 .sync{font-size:.78rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
 .sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
@@ -175,7 +184,7 @@ details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(-
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1 class="logo"><svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 10 H30 A22 22 0 0 1 30 54 H15 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"></path><line x1="15" y1="25" x2="50.5" y2="25" stroke="currentColor" stroke-width="4.5"></line><line x1="15" y1="39" x2="50.5" y2="39" stroke="currentColor" stroke-width="4.5"></line></svg>Despensify</h1><span id="sync" class="sync">Conectando…</span></div>
+    <div class="brand"><h1 class="logo"><svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 10 H30 A22 22 0 0 1 30 54 H15 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"></path><line x1="15" y1="25" x2="50.5" y2="25" stroke="currentColor" stroke-width="4.5"></line><line x1="15" y1="39" x2="50.5" y2="39" stroke="currentColor" stroke-width="4.5"></line></svg>Despensify</h1><button class="casa-btn" id="casa-btn" data-act="casas" hidden><span id="casa-name"></span><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><span id="sync" class="sync">Conectando…</span></div>
     <button class="btn primary" data-act="new">+ Agregar producto</button>
   </header>
   <nav class="tabs" id="tabs">
@@ -190,6 +199,7 @@ details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(-
       <div class="panel setup">
         <h2 id="setup-title">Configurar Despensify</h2>
         <p class="hint">Esto se hace una sola vez, en un solo dispositivo. Pegá los datos de tu proyecto de Supabase. Después vas a tener un link para que el resto de tu hogar entre sin configurar nada.</p>
+        <div class="field"><label for="s-name">Nombre de la casa</label><input id="s-name" value="Mi casa" maxlength="40" autocomplete="off"></div>
         <div class="field"><label for="s-url">URL del proyecto</label><input id="s-url" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off" spellcheck="false"></div>
         <div class="field"><label for="s-key">Clave pública (publishable o anon)</label><input id="s-key" placeholder="sb_publishable_…" autocomplete="off" spellcheck="false"></div>
         <div class="field"><label for="s-code">Código de la casa</label><input id="s-code" autocomplete="off" spellcheck="false"><small>Se genera al azar y funciona como contraseña de tu despensa. Si ya tenés uno (por ejemplo, otro dispositivo), pegalo acá.</small></div>
@@ -262,7 +272,7 @@ details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(-
         <button class="btn" data-act="seed">✨ Cargar sugeridos</button>
       </div>
       <div class="panel" id="share-panel">
-        <h2>Compartir con tu hogar</h2>
+        <h2 id="share-title">Compartir con tu hogar</h2>
         <p class="hint">Mandale este link a quien viva con vos (por WhatsApp, por ejemplo). Al abrirlo queda conectado a esta misma despensa, sin crear cuentas. Quien tenga el link puede ver y editar todo, así que compartilo solo con tu hogar.</p>
         <div class="add-row"><input id="share-link" readonly aria-label="Link para compartir"><button class="btn" data-act="copy-share">Copiar link</button></div>
         <textarea id="share-fallback" class="copy-fallback" readonly hidden></textarea>
@@ -283,13 +293,28 @@ details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(-
           <textarea id="import-text" placeholder="{ &quot;items&quot;: [ … ] }" aria-label="Respaldo a importar"></textarea>
           <button class="btn" data-act="import">Importar</button>
         </details>
-        <p style="margin-top:16px"><button class="btn danger" data-act="disconnect">Desconectar este dispositivo</button></p>
+        <p style="margin-top:16px"><button class="btn danger" data-act="disconnect">Quitar esta casa de este dispositivo</button></p><p class="hint">Los datos no se borran: quedan en la nube y podés volver a entrar con el link de la casa.</p>
       </div>
     </section>
   </main>
 </div>
 
 <button class="fab" data-act="new" aria-label="Agregar producto">+</button>
+
+<div class="modal" id="casas-modal" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="casas-title">
+    <h2 id="casas-title">Tus casas</h2>
+    <p class="hint">Tocá un nombre para cambiarlo. Los nombres son solo de este dispositivo.</p>
+    <div id="casas-list"></div>
+    <div class="sub-h">Crear otra casa</div>
+    <form id="casa-new" class="add-row"><input name="nombre" placeholder="Nombre (ej. Casa de la playa)" maxlength="40" required aria-label="Nombre de la casa nueva"><button class="btn primary">Crear</button></form>
+    <p class="hint" id="casa-new-hint"></p>
+    <div class="sub-h">Sumarme a una casa</div>
+    <form id="casa-join" class="add-row"><input name="link" placeholder="Pegá el link que te compartieron" required aria-label="Link de la casa"><button class="btn">Sumarme</button></form>
+    <p class="hint">También podés abrir directamente el link que te mandaron.</p>
+    <div class="sheet-actions"><span class="sp"></span><button type="button" class="btn" data-act="close-casas">Cerrar</button></div>
+  </div>
+</div>
 
 <div class="modal" id="modal" hidden>
   <form class="sheet" id="item-form" autocomplete="off">
@@ -350,39 +375,63 @@ try { const p = JSON.parse(localStorage.getItem('despensa-ui') || '{}'); if (p.g
 const saveUI = () => { try { localStorage.setItem('despensa-ui', JSON.stringify({group: UI.group, soonDays: UI.soonDays})); } catch (e) {} };
 
 /* ---------- storage (Supabase) ---------- */
-const CFG_KEY = 'despensify-cfg', CACHE_KEY = 'despensify-cache';
-let CFG = null;
+const CFG_KEY = 'despensify-cfg', CASAS_KEY = 'despensify-casas';
+let CFG = null;     // active house {u, k, c, n}
+let CASAS = [];     // every house on this device
+let INVITE = null, PENDING_INVITE = null;
 const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const b64d = t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, '+').replace(/_/g, '/')))));
-const validCfg = c => c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10 && typeof c.c === 'string' && c.c.length >= 16;
+const validCfg = c => c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10 && typeof c.c === 'string' && /^[A-Za-z0-9_-]{16,}$/.test(c.c);
+const validConn = c => c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10;
+const cleanName = n => String(n || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+function uniqueName(base) { let n = base, i = 2; while (CASAS.some(x => norm(x.n) === norm(n))) n = base + ' ' + i++; return n; }
 
-let INVITE = null;
-function readInvite() {
+function saveCasas() {
   try {
-    const p = new URLSearchParams(location.search).get('i'); if (!p) return null;
-    const c = b64d(p); if (c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10) return {u: c.u, k: c.k};
+    localStorage.setItem(CASAS_KEY, JSON.stringify({list: CASAS, activa: CFG ? CFG.c : null}));
+    if (CFG) localStorage.setItem(CFG_KEY, JSON.stringify({u: CFG.u, k: CFG.k, c: CFG.c})); else localStorage.removeItem(CFG_KEY);
   } catch (e) {}
-  return null;
 }
+function loadCasas() {
+  let activa = null;
+  try { const d = JSON.parse(localStorage.getItem(CASAS_KEY) || 'null');
+    if (d && Array.isArray(d.list)) { CASAS = d.list.filter(validCfg).map(x => ({u: x.u, k: x.k, c: x.c, n: cleanName(x.n) || 'Mi casa'})); activa = d.activa; } } catch (e) {}
+  if (!CASAS.length) { // single-house setups from before
+    try { const c = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); if (validCfg(c)) { CASAS = [{u: c.u, k: c.k, c: c.c, n: 'Mi casa'}]; activa = c.c; } } catch (e) {}
+  }
+  return CASAS.find(x => x.c === activa) || CASAS[0] || null;
+}
+function addCasa(c, name) {
+  const found = CASAS.find(x => x.c === c.c);
+  if (found) return {casa: found, isNew: false};
+  const casa = {u: c.u, k: c.k, c: c.c, n: uniqueName(cleanName(name) || 'Casa')};
+  CASAS.push(casa);
+  return {casa, isNew: true};
+}
+function readLink(text) {
+  let q;
+  try { q = text ? new URL(text.trim()).searchParams : new URLSearchParams(location.search); } catch (e) { return {s: null, i: null}; }
+  let sh = null, inv = null;
+  try { const p = q.get('s'); if (p) { const c = b64d(p); if (validCfg(c)) sh = {u: c.u, k: c.k, c: c.c, n: cleanName(c.n)}; } } catch (e) {}
+  try { const p = q.get('i'); if (p) { const c = b64d(p); if (validConn(c)) inv = {u: c.u, k: c.k}; } } catch (e) {}
+  return {s: sh, i: inv};
+}
+const shareLink = (c = CFG) => location.origin + location.pathname + '?s=' + b64e({u: c.u, k: c.k, c: c.c, n: c.n});
 const inviteLink = () => location.origin + location.pathname + '?i=' + b64e({u: CFG.u, k: CFG.k});
-function readCfg() {
-  try {
-    const p = new URLSearchParams(location.search).get('s');
-    if (p) { const c = b64d(p); if (validCfg(c)) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch (e) {} return c; } }
-  } catch (e) {}
-  try { const c = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); if (validCfg(c)) return c; } catch (e) {}
-  return null;
-}
-const shareLink = () => location.origin + location.pathname + '?s=' + b64e({u: CFG.u, k: CFG.k, c: CFG.c});
-// keep the config in the address bar so "Add to home screen" opens this same pantry
+// keep the active house in the address bar so "Add to home screen" opens it
 function stampUrl() { try { history.replaceState(null, '', shareLink()); } catch (e) {} }
 
+const cacheKey = () => 'despensify-cache:' + CFG.c;
 function loadCache() {
-  try { const d = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if (d && d.c === CFG.c) { S.items = d.items || []; S.categories = d.categories || []; S.locations = d.locations || []; return true; } } catch (e) {}
+  S.items = []; S.categories = []; S.locations = [];
+  try {
+    let d = JSON.parse(localStorage.getItem(cacheKey()) || 'null');
+    if (!d) { const old = JSON.parse(localStorage.getItem('despensify-cache') || 'null'); if (old && old.c === CFG.c) d = old; }
+    if (d) { S.items = d.items || []; S.categories = d.categories || []; S.locations = d.locations || []; return true; }
+  } catch (e) {}
   return false;
 }
-function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({c: CFG.c, items: S.items, categories: S.categories, locations: S.locations})); } catch (e) {} }
+function saveCache() { try { localStorage.setItem(cacheKey(), JSON.stringify({items: S.items, categories: S.categories, locations: S.locations})); } catch (e) {} }
 
 function setSync(text, cls) { const el = $('#sync'); el.textContent = text; el.className = 'sync ' + (cls || ''); el.hidden = !text; }
 
@@ -399,8 +448,10 @@ const pending = new Map(), deleted = new Set(), chains = {};
 let pulling = false;
 async function pull() {
   if (!CFG || pulling) return; pulling = true;
+  const cfg = CFG; let stale = false;
   try {
-    const rows = await rpc(CFG, 'despensa_leer', {p_casa: CFG.c}) || [];
+    const rows = await rpc(cfg, 'despensa_leer', {p_casa: cfg.c}) || [];
+    if (cfg !== CFG) { stale = true; return; } // switched house meanwhile
     const next = {items: [], categories: [], locations: []};
     for (const r of rows) {
       if (!next[r.coll] || !r.data || typeof r.data !== 'object') continue;
@@ -413,9 +464,10 @@ async function pull() {
     saveCache(); mode = 'remote'; setSync('Sincronizado', 'ok'); render();
     visit();
   } catch (e) {
+    if (cfg !== CFG) { stale = true; return; }
     setSync(navigator.onLine === false ? 'Sin conexión: mostrando lo último guardado' : 'No se pudo sincronizar', 'warn');
     if (mode === 'loading') { mode = 'error'; render(); }
-  } finally { pulling = false; }
+  } finally { pulling = false; if (stale) pull(); }
 }
 
 function queue(coll, id, fn) {
@@ -436,30 +488,33 @@ function queue(coll, id, fn) {
   return chains[key];
 }
 function put(coll, obj) {
+  const cfg = CFG; // a write always goes to the house it was made in
   const arr = S[coll]; const i = arr.findIndex(x => x.id === obj.id);
   if (i >= 0) arr[i] = obj; else arr.push(obj);
   saveCache(); render();
   const {id, ...data} = obj;
   const body = JSON.parse(JSON.stringify(data));
-  return queue(coll, id, () => rpc(CFG, 'despensa_guardar', {p_casa: CFG.c, p_coll: coll, p_id: id, p_data: body}));
+  return queue(coll, id, () => rpc(cfg, 'despensa_guardar', {p_casa: cfg.c, p_coll: coll, p_id: id, p_data: body}));
 }
 function remove(coll, id) {
+  const cfg = CFG;
   S[coll] = S[coll].filter(x => x.id !== id); deleted.add(coll + '/' + id);
   saveCache(); render();
-  return queue(coll, id, () => rpc(CFG, 'despensa_borrar', {p_casa: CFG.c, p_coll: coll, p_id: id}));
+  return queue(coll, id, () => rpc(cfg, 'despensa_borrar', {p_casa: cfg.c, p_coll: coll, p_id: id}));
 }
 
-// anonymous usage stats: one ping per device per day (no personal data)
-let lastVisit = '';
+// anonymous usage stats: one ping per device, house and day (no personal data)
+const visited = new Set();
 function deviceId() {
   try { let d = localStorage.getItem('despensify-dispositivo'); if (!d) { d = randomCode(); localStorage.setItem('despensify-dispositivo', d); } return d; }
   catch (e) { return null; }
 }
 function visit() {
-  const n = new Date(), today = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate();
-  if (lastVisit === today || !CFG) return;
+  if (!CFG) return;
+  const n = new Date(), key = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate() + '|' + CFG.c;
+  if (visited.has(key)) return;
   const dev = deviceId(); if (!dev) return;
-  lastVisit = today;
+  visited.add(key);
   rpc(CFG, 'despensa_visita', {p_casa: CFG.c, p_dispositivo: dev}).catch(() => {});
 }
 
@@ -472,6 +527,7 @@ function randomCode() {
 async function setupSave() {
   const msg = $('#setup-msg');
   const cfg = {u: $('#s-url').value.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, ''), k: $('#s-key').value.trim(), c: $('#s-code').value.trim()};
+  const name = cleanName($('#s-name').value) || 'Mi casa';
   const say = (t, cls) => { msg.textContent = t; msg.className = 'setup-msg ' + (cls || ''); };
   if (!/^https:\/\/\S+$/.test(cfg.u)) return say('La URL tiene que empezar con https:// (ej. https://xxxxxxxx.supabase.co).', 'bad');
   if (cfg.k.length < 20) return say('Falta la clave pública.', 'bad');
@@ -486,38 +542,117 @@ async function setupSave() {
     if (e.status) return say('Supabase respondió con un error: ' + e.message, 'bad');
     return say('No pude conectarme a esa URL. Revisá que esté bien copiada y que el proyecto esté activo.', 'bad');
   }
-  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  const {casa} = addCasa(cfg, name);
   say('¡Listo!', 'ok');
   if (INVITE) setTimeout(() => toast('¡Bienvenido! Esta es tu despensa, empieza vacía.'), 400);
-  start(cfg);
+  start(casa);
+}
+
+function switchTo(casa) {
+  CFG = casa; saveCasas(); stampUrl();
+  UI.cat = ''; UI.loc = ''; UI.status = ''; UI.q = ''; $('#f-q').value = '';
+  mode = loadCache() ? 'remote' : 'loading';
+  setSync('Conectando…'); render(); pull();
 }
 
 let started = false;
-function start(cfg) {
-  CFG = cfg; stampUrl();
-  mode = loadCache() ? 'remote' : 'loading';
-  setSync('Conectando…'); render(); pull();
+function start(casa) {
+  switchTo(casa);
   if (started) return; started = true;
   setInterval(() => { if (document.visibilityState === 'visible') pull(); }, 15000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); });
   window.addEventListener('online', pull);
 }
 
-async function init() {
-  INVITE = readInvite();
-  const cfg = readCfg();
-  if (cfg) {
-    if (INVITE) setTimeout(() => toast('Este dispositivo ya tiene una despensa, así que se abrió esa.'), 600);
-    start(cfg); return;
-  }
-  mode = 'setup'; setSync(''); $('#s-code').value = randomCode();
-  if (INVITE) {
-    // invited by another household: create a fresh, empty pantry automatically
-    $('#s-url').value = INVITE.u; $('#s-key').value = INVITE.k;
-    $('#setup-title').textContent = 'Creando tu despensa…';
-    render(); setupSave(); return;
-  }
+function showSetup(prefill) {
+  CFG = null; saveCasas();
+  mode = 'setup'; setSync('');
+  S.items = []; S.categories = []; S.locations = [];
+  $('#s-code').value = randomCode();
+  if (prefill) { $('#s-url').value = prefill.u; $('#s-key').value = prefill.k; }
+  $('#setup-title').textContent = 'Configurar Despensify';
+  $('#setup-msg').textContent = '';
   render();
+}
+
+/* ---------- houses ---------- */
+function createCasa(name, conn) {
+  const base = conn || CFG;
+  const {casa} = addCasa({u: base.u, k: base.k, c: randomCode()}, cleanName(name) || 'Casa');
+  PENDING_INVITE = null;
+  switchTo(casa); closeCasas();
+  toast(`Listo: «${casa.n}» empieza vacía`);
+}
+function joinCasa(text) {
+  const {s: sh, i: inv} = readLink(text);
+  if (sh) {
+    const {casa, isNew} = addCasa(sh, sh.n);
+    switchTo(casa); closeCasas();
+    toast(isNew ? `Te sumaste a «${casa.n}»` : `Ya tenías «${casa.n}»: la abrí`);
+    return true;
+  }
+  if (inv) { createCasa(uniqueName('Mi casa'), inv); return true; }
+  toast('Ese link no es de una casa de Despensify');
+  return false;
+}
+function removeCasa(c) {
+  const idx = CASAS.findIndex(x => x.c === c); if (idx < 0) return;
+  const [gone] = CASAS.splice(idx, 1);
+  try { localStorage.removeItem('despensify-cache:' + c); } catch (e) {}
+  if (CFG && CFG.c === c) {
+    if (CASAS.length) switchTo(CASAS[0]); else { closeCasas(); showSetup(gone); }
+  } else saveCasas();
+  renderCasas();
+  toast(`Quitaste «${gone.n}» de este dispositivo`);
+}
+function renameCasa(c, name) {
+  const casa = CASAS.find(x => x.c === c); name = cleanName(name);
+  if (!casa || !name || name === casa.n) return false;
+  casa.n = name; saveCasas(); if (CFG && CFG.c === c) stampUrl();
+  render(); return true;
+}
+function renderCasas() {
+  const el = $('#casas-list'); if (!el) return;
+  el.innerHTML = CASAS.map(x => {
+    const on = CFG && CFG.c === x.c;
+    return `<div class="casa-row ${on ? 'on' : ''}" data-c="${esc(x.c)}">
+      <input class="casa-name" value="${esc(x.n)}" maxlength="40" aria-label="Nombre de la casa">
+      ${on ? '<span class="casa-cur">Abierta</span>' : '<button class="btn" data-pick>Abrir</button>'}
+      <button class="icon-btn" data-quitar aria-label="Quitar de este dispositivo">✕</button>
+    </div>`;
+  }).join('');
+}
+function openCasas(focusNew) {
+  renderCasas();
+  $('#casa-new-hint').textContent = PENDING_INVITE
+    ? 'Te invitaron a usar Despensify: poné un nombre y creá tu propia despensa, vacía y separada.'
+    : 'Crea una despensa nueva y vacía, separada de las demás.';
+  $('#casas-modal').hidden = false;
+  if (focusNew) setTimeout(() => $('#casa-new input').focus(), 50);
+}
+function closeCasas() { $('#casas-modal').hidden = true; }
+
+function init() {
+  let active = loadCasas();
+  const {s: sh, i: inv} = readLink();
+  if (sh) {
+    const {casa, isNew} = addCasa(sh, sh.n);
+    // a new house opens; an already-known one (e.g. the home-screen icon) keeps the last house used
+    if (isNew) { active = casa; if (CASAS.length > 1) setTimeout(() => toast(`Se agregó «${casa.n}» a tus casas`), 600); }
+    else if (!active) active = casa;
+  }
+  if (active) {
+    start(active);
+    if (inv) { PENDING_INVITE = inv; setTimeout(() => openCasas(true), 400); }
+    return;
+  }
+  showSetup(inv);
+  if (inv) {
+    // invited by another household: create a fresh, empty pantry automatically
+    INVITE = inv; $('#s-name').value = 'Mi casa';
+    $('#setup-title').textContent = 'Creando tu despensa…';
+    setupSave();
+  }
 }
 
 /* ---------- derived ---------- */
@@ -692,15 +827,17 @@ function renderCfg() {
   const typing = list => act && act.tagName === 'INPUT' && act.closest && act.closest(list);
   if (!typing('#cat-list')) $('#cat-list').innerHTML = refRows('categories');
   if (!typing('#loc-list')) $('#loc-list').innerHTML = refRows('locations');
-  document.querySelectorAll('.add-row').forEach(f => f.hidden = readOnly);
+  document.querySelectorAll('.add-row[data-add]').forEach(f => f.hidden = readOnly);
   $('#seed-panel').hidden = readOnly;
   $('#storage-note').textContent = 'Los datos se guardan en tu proyecto de Supabase y se sincronizan cada pocos segundos entre todos los dispositivos conectados. Copiá un respaldo de vez en cuando por las dudas.';
-  if (CFG) { $('#share-link').value = shareLink(); $('#invite-link').value = inviteLink(); }
+  if (CFG) { $('#share-link').value = shareLink(); $('#invite-link').value = inviteLink(); $('#share-title').textContent = `Compartir «${CFG.n}» con tu hogar`; }
 }
 
 function render() {
   const setup = mode === 'setup';
   $('#v-setup').hidden = !setup; $('#tabs').hidden = setup;
+  $('#casa-btn').hidden = setup || !CFG;
+  if (CFG) { $('#casa-name').textContent = CFG.n; document.title = CASAS.length > 1 ? CFG.n + ' · Despensify' : 'Despensify'; }
   ['inv', 'exp', 'shop', 'cfg'].forEach(t => $('#v-' + t).hidden = setup || UI.tab !== t);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
   const expN = S.items.filter(it => (+it.quantity || 0) > 0 && (isExpired(it) || isSoon(it))).length;
@@ -843,14 +980,22 @@ document.addEventListener('click', e => {
   if (act === 'seed') return seed();
   if (act === 'copy-shop') return copyText(shopText(), '#shop-fallback');
   if (act === 'setup-save') return setupSave();
+  if (act === 'casas') return openCasas(false);
+  if (act === 'close-casas') { PENDING_INVITE = null; return closeCasas(); }
+  if (t.hasAttribute('data-pick')) { const c = CASAS.find(x => x.c === t.closest('.casa-row').dataset.c); if (c) { switchTo(c); closeCasas(); toast(`Abriste «${c.n}»`); } return; }
+  if (t.hasAttribute('data-quitar')) {
+    const c = t.closest('.casa-row').dataset.c;
+    if (!t.classList.contains('confirm')) { t.classList.add('confirm'); t.textContent = '¿Quitar?'; setTimeout(() => { t.classList.remove('confirm'); t.textContent = '✕'; }, 3000); return; }
+    return removeCasa(c);
+  }
   if (act === 'retry') { mode = 'loading'; render(); return pull(); }
   if (act === 'copy-share') return copyText(shareLink(), '#share-fallback');
   if (act === 'copy-invite') return copyText(inviteLink(), '#invite-fallback');
   if (act === 'import') return importBackup();
   if (act === 'disconnect') {
-    if (!t.classList.contains('confirm')) { t.classList.add('confirm'); t.textContent = '¿Seguro? Desconectar'; setTimeout(() => { t.classList.remove('confirm'); t.textContent = 'Desconectar este dispositivo'; }, 4000); return; }
-    try { localStorage.removeItem(CFG_KEY); localStorage.removeItem(CACHE_KEY); } catch (e) {}
-    location.href = location.pathname; return;
+    if (!t.classList.contains('confirm')) { t.classList.add('confirm'); t.textContent = `¿Seguro? Quitar «${CFG.n}»`; setTimeout(() => { t.classList.remove('confirm'); t.textContent = 'Quitar esta casa de este dispositivo'; }, 4000); return; }
+    t.classList.remove('confirm'); t.textContent = 'Quitar esta casa de este dispositivo';
+    removeCasa(CFG.c); return;
   }
   if (act === 'copy-backup') return copyText(JSON.stringify({exportado: new Date().toISOString(), ...S}, null, 2), '#backup-fallback');
 });
@@ -861,9 +1006,13 @@ $('#btn-del').addEventListener('click', e => {
   const id = editingId; closeForm(); remove('items', id); toast('Producto eliminado');
 });
 $('#btn-another').addEventListener('click', () => saveForm(true));
+$('#casa-new').addEventListener('submit', e => { e.preventDefault(); const n = cleanName(e.target.elements.nombre.value); if (!n) return; e.target.reset(); createCasa(n, PENDING_INVITE); });
+$('#casa-join').addEventListener('submit', e => { e.preventDefault(); if (joinCasa(e.target.elements.link.value)) e.target.reset(); });
+$('#casas-list').addEventListener('change', e => { const inp = e.target.closest('.casa-name'); if (!inp) return; const c = inp.closest('.casa-row').dataset.c; if (renameCasa(c, inp.value)) toast('Nombre guardado'); else inp.value = (CASAS.find(x => x.c === c) || {}).n || ''; });
+$('#casas-modal').addEventListener('mousedown', e => { if (e.target.id === 'casas-modal') { PENDING_INVITE = null; closeCasas(); } });
 $('#item-form').addEventListener('submit', e => { e.preventDefault(); saveForm(false); });
 $('#modal').addEventListener('mousedown', e => { if (e.target.id === 'modal') closeForm(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeForm(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('#modal').hidden) closeForm(); else if (!$('#casas-modal').hidden) { PENDING_INVITE = null; closeCasas(); } });
 
 $('#f-q').addEventListener('input', e => { UI.q = e.target.value; renderInv(); });
 $('#f-cat').addEventListener('change', e => { UI.cat = e.target.value; renderInv(); });
@@ -883,7 +1032,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.cfg-row')) setTimeout(() => { if (UI.tab === 'cfg' && !document.activeElement.closest('.cfg-row')) renderCfg(); }, 0); });
 
-document.querySelectorAll('.add-row').forEach(f => f.addEventListener('submit', e => {
+document.querySelectorAll('.add-row[data-add]').forEach(f => f.addEventListener('submit', e => {
   e.preventDefault(); if (readOnly) return;
   const coll = f.dataset.add, name = f.elements.name.value.trim(); if (!name) return;
   if (S[coll].some(x => norm(x.name) === norm(name))) { toast('Ya existe'); return; }
