@@ -115,7 +115,7 @@ main{padding:18px 0 110px}
 .sub-h{font-family:"DM Sans";font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:20px 2px 8px}
 
 /* settings */
-.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cfg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 .panel h2{margin-bottom:10px}
 .cfg-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f0eadc}
@@ -130,7 +130,8 @@ main{padding:18px 0 110px}
 .icon-btn.confirm{background:var(--bad);color:#fff}
 .add-row{display:flex;gap:6px;margin-top:10px}
 .add-row input{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0}
-.add-row input[name=name]{flex:1}
+.add-row input[name=name],.add-row input[readonly]{flex:1;width:0}
+.add-row .btn{white-space:nowrap;flex-shrink:0}
 .copy-fallback{width:100%;min-height:140px;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,monospace}
 
 /* modal */
@@ -162,7 +163,7 @@ details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(-
   .stats{grid-template-columns:repeat(2,1fr)}
   .filters{grid-template-columns:1fr 1fr}
   .filters #f-q{grid-column:1/-1}
-  .cfg-grid{grid-template-columns:1fr}
+  .cfg-grid{grid-template-columns:minmax(0,1fr)}
   .top .btn.primary{display:none}
   .fab{display:flex;position:fixed;right:18px;bottom:20px;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:2rem;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(50,70,30,.35);cursor:pointer;z-index:10}
   .modal{align-items:flex-end;padding:0}
@@ -410,6 +411,7 @@ async function pull() {
     for (const c of ['items', 'categories', 'locations']) for (const x of S[c]) if (pending.has(c + '/' + x.id)) next[c].push(x);
     S.items = next.items; S.categories = next.categories; S.locations = next.locations;
     saveCache(); mode = 'remote'; setSync('Sincronizado', 'ok'); render();
+    visit();
   } catch (e) {
     setSync(navigator.onLine === false ? 'Sin conexión: mostrando lo último guardado' : 'No se pudo sincronizar', 'warn');
     if (mode === 'loading') { mode = 'error'; render(); }
@@ -445,6 +447,20 @@ function remove(coll, id) {
   S[coll] = S[coll].filter(x => x.id !== id); deleted.add(coll + '/' + id);
   saveCache(); render();
   return queue(coll, id, () => rpc(CFG, 'despensa_borrar', {p_casa: CFG.c, p_coll: coll, p_id: id}));
+}
+
+// anonymous usage stats: one ping per device per day (no personal data)
+let lastVisit = '';
+function deviceId() {
+  try { let d = localStorage.getItem('despensify-dispositivo'); if (!d) { d = randomCode(); localStorage.setItem('despensify-dispositivo', d); } return d; }
+  catch (e) { return null; }
+}
+function visit() {
+  const n = new Date(), today = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate();
+  if (lastVisit === today || !CFG) return;
+  const dev = deviceId(); if (!dev) return;
+  lastVisit = today;
+  rpc(CFG, 'despensa_visita', {p_casa: CFG.c, p_dispositivo: dev}).catch(() => {});
 }
 
 function randomCode() {
@@ -673,8 +689,9 @@ function refRows(coll) {
 }
 function renderCfg() {
   const act = document.activeElement;
-  if (!(act && act.closest && act.closest('#cat-list'))) $('#cat-list').innerHTML = refRows('categories');
-  if (!(act && act.closest && act.closest('#loc-list'))) $('#loc-list').innerHTML = refRows('locations');
+  const typing = list => act && act.tagName === 'INPUT' && act.closest && act.closest(list);
+  if (!typing('#cat-list')) $('#cat-list').innerHTML = refRows('categories');
+  if (!typing('#loc-list')) $('#loc-list').innerHTML = refRows('locations');
   document.querySelectorAll('.add-row').forEach(f => f.hidden = readOnly);
   $('#seed-panel').hidden = readOnly;
   $('#storage-note').textContent = 'Los datos se guardan en tu proyecto de Supabase y se sincronizan cada pocos segundos entre todos los dispositivos conectados. Copiá un respaldo de vez en cuando por las dudas.';
