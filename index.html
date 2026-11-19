@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#4d6a37">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Despensify">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Despensify</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234d6a37'/%3E%3Cg transform='translate(10 10) scale(.69)' fill='none' stroke='%23fff' stroke-width='6'%3E%3Cpath d='M15 10 H30 A22 22 0 0 1 30 54 H15 Z' stroke-linejoin='round'/%3E%3Cline x1='15' y1='25' x2='50.5' y2='25'/%3E%3Cline x1='15' y1='39' x2='50.5' y2='39'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f0e6; --card:#fffdf8; --ink:#2a2924; --muted:#7b766a; --line:#e5ddcb;
+  --accent:#4d6a37; --accent-ink:#fff; --accent-soft:#e2eAd5;
+  --warn:#b8691f; --warn-soft:#f9e6cf; --bad:#b03f2b; --bad-soft:#f6dad3;
+  --ok:#5b6f4b; --ok-soft:#eaefe2;
+  --r:14px; --shadow:0 1px 0 rgba(60,50,30,.05),0 2px 10px rgba(60,50,30,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "DM Sans",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:650;margin:0;letter-spacing:-.01em}
+h2{font-size:1.25rem}
+[hidden]{display:none!important}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0 10px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:2rem}
+.brand h1.logo{display:flex;align-items:center;gap:10px}
+.brand h1.logo svg{color:var(--accent);flex-shrink:0}
+.sync{font-size:.78rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.sync.ok::before{background:#6c9a4a}.sync.warn::before{background:var(--warn)}.sync.bad::before{background:var(--bad)}
+
+/* tabs */
+.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;padding:8px 0 10px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:500;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tabs button:hover{background:#ece5d6;color:var(--ink)}
+.tabs button.on{background:var(--ink);color:#fff}
+.tabs b{font-size:.72rem;background:var(--bad);color:#fff;border-radius:999px;padding:1px 7px;font-weight:600}
+.tabs b:empty{display:none}
+.tabs b.warn{background:var(--warn)}
+
+main{padding:18px 0 110px}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:600;transition:.15s}
+.btn:hover{border-color:#cfc5ae}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.danger.confirm{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
+.stat:hover{transform:translateY(-1px)}
+.stat .n{font-family:Fraunces,serif;font-size:1.7rem;font-weight:650;line-height:1.1}
+.stat .l{font-size:.8rem;color:var(--muted)}
+.stat.bad .n{color:var(--bad)}.stat.warn .n{color:var(--warn)}.stat.low .n{color:#7a5a9a}
+.stat.sel{outline:2px solid var(--ink);outline-offset:-1px}
+
+/* filters */
+.filters{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr;gap:8px;margin-bottom:10px}
+.filters input,.filters select,.field input,.field select,.field textarea,.inline select{
+  width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px;outline:none}
+.filters input:focus,.filters select:focus,.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.active-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:#fff;border-radius:999px;padding:4px 6px 4px 12px;font-size:.82rem}
+.pill button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:999px;width:20px;height:20px;cursor:pointer;line-height:1}
+
+/* groups + items */
+.group{margin-top:18px}
+.group-h{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-weight:600}
+.group-h .emo{font-size:1.15rem}
+.group-h .c{color:var(--muted);font-weight:500;font-size:.85rem}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 10px 10px 14px;box-shadow:var(--shadow)}
+.item.out{opacity:.7}
+.item-main{flex:1;min-width:0;border:0;background:none;text-align:left;cursor:pointer;padding:2px 0}
+.item-name{font-weight:600;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.chip{font-size:.76rem;background:#f1ebde;color:#5e594e;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.badge{font-size:.76rem;border-radius:999px;padding:2px 9px;font-weight:600;white-space:nowrap}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:var(--ok-soft);color:var(--ok);font-weight:500}
+.badge.low{background:#ece4f4;color:#6a4b8c}
+.qty{display:flex;align-items:center;gap:2px;background:#f4eee2;border-radius:12px;padding:3px;flex-shrink:0}
+.qty button{width:34px;height:34px;border:0;border-radius:9px;background:var(--card);cursor:pointer;font-size:1.15rem;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.qty button:hover{background:#fff}
+.qty .v{min-width:58px;text-align:center;font-weight:700;line-height:1.1}
+.qty .v small{display:block;font-weight:500;font-size:.7rem;color:var(--muted)}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+.empty .big{font-size:2.4rem}
+.empty h3{color:var(--ink);margin:8px 0 6px}
+.empty .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.hint{color:var(--muted);margin:4px 0 14px;font-size:.9rem}
+.inline{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+.inline select{width:auto;padding:6px 8px}
+.sub-h{font-family:"DM Sans";font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:20px 2px 8px}
+
+/* settings */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.panel h2{margin-bottom:10px}
+.cfg-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f0eadc}
+.cfg-row input{border:1px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;min-width:0}
+.cfg-row input:hover{border-color:var(--line)}
+.cfg-row input:focus{border-color:var(--accent);background:#fff;outline:none}
+.cfg-row .nm{flex:1}
+.emo-in{width:44px;text-align:center;font-size:1.1rem}
+.cfg-row .count{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.icon-btn{border:0;background:transparent;cursor:pointer;color:var(--muted);border-radius:8px;padding:6px 8px;font-size:.85rem;white-space:nowrap}
+.icon-btn:hover{background:var(--bad-soft);color:var(--bad)}
+.icon-btn.confirm{background:var(--bad);color:#fff}
+.add-row{display:flex;gap:6px;margin-top:10px}
+.add-row input{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0}
+.add-row input[name=name]{flex:1}
+.copy-fallback{width:100%;min-height:140px;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,monospace}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(40,35,25,.38);display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
+.sheet{background:var(--card);border-radius:18px;width:100%;max-width:520px;max-height:calc(100vh - 32px);overflow:auto;padding:20px 20px 16px;box-shadow:0 20px 60px rgba(40,30,10,.25);animation:rise .18s ease-out}
+.sheet h2{margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:.8rem;font-weight:600;color:var(--muted)}
+.field small{color:var(--muted);font-size:.75rem}
+.field textarea{min-height:60px;resize:vertical}
+.sheet-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sheet-actions .sp{flex:1}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:30;font-size:.9rem;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%)}
+
+.fab{display:none}
+.setup{max-width:560px;margin:10px auto}
+.setup .field input{font-size:16px}
+.setup-msg{margin-top:10px;font-size:.9rem}
+.setup-msg.bad{color:var(--bad)}.setup-msg.ok{color:var(--ok)}
+details summary{cursor:pointer;font-weight:600;margin-top:14px}
+details textarea{width:100%;min-height:110px;margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,monospace}
+#share-link{font-size:.85rem}
+@media (max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .filters{grid-template-columns:1fr 1fr}
+  .filters #f-q{grid-column:1/-1}
+  .cfg-grid{grid-template-columns:1fr}
+  .top .btn.primary{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:20px;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:2rem;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(50,70,30,.35);cursor:pointer;z-index:10}
+  .modal{align-items:flex-end;padding:0}
+  .sheet{border-radius:18px 18px 0 0;max-height:92vh}
+  .brand h1{font-size:1.7rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1 class="logo"><svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><path d="M15 10 H30 A22 22 0 0 1 30 54 H15 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"></path><line x1="15" y1="25" x2="50.5" y2="25" stroke="currentColor" stroke-width="4.5"></line><line x1="15" y1="39" x2="50.5" y2="39" stroke="currentColor" stroke-width="4.5"></line></svg>Despensify</h1><span id="sync" class="sync">Conectando…</span></div>
+    <button class="btn primary" data-act="new">+ Agregar producto</button>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-tab="inv" class="on">🧺 Inventario</button>
+    <button data-tab="exp">⏳ Vencimientos <b id="b-exp"></b></button>
+    <button data-tab="shop">🛒 Compras <b id="b-shop" class="warn"></b></button>
+    <button data-tab="cfg">⚙️ Categorías y lugares</button>
+  </nav>
+
+  <main>
+    <section id="v-setup" hidden>
+      <div class="panel setup">
+        <h2 id="setup-title">Configurar Despensify</h2>
+        <p class="hint">Esto se hace una sola vez, en un solo dispositivo. Pegá los datos de tu proyecto de Supabase. Después vas a tener un link para que el resto de tu hogar entre sin configurar nada.</p>
+        <div class="field"><label for="s-url">URL del proyecto</label><input id="s-url" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="s-key">Clave pública (publishable o anon)</label><input id="s-key" placeholder="sb_publishable_…" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="s-code">Código de la casa</label><input id="s-code" autocomplete="off" spellcheck="false"><small>Se genera al azar y funciona como contraseña de tu despensa. Si ya tenés uno (por ejemplo, otro dispositivo), pegalo acá.</small></div>
+        <div class="sheet-actions"><span class="sp"></span><button class="btn primary" data-act="setup-save">Conectar</button></div>
+        <div class="setup-msg" id="setup-msg"></div>
+      </div>
+    </section>
+
+    <section id="v-inv">
+      <div class="stats" id="stats"></div>
+      <div class="filters">
+        <input id="f-q" type="search" placeholder="Buscar producto…" autocomplete="off">
+        <select id="f-cat" aria-label="Categoría"></select>
+        <select id="f-loc" aria-label="Lugar"></select>
+        <select id="f-group" aria-label="Agrupar">
+          <option value="cat">Agrupar por categoría</option>
+          <option value="loc">Agrupar por lugar</option>
+          <option value="exp">Ordenar por vencimiento</option>
+          <option value="name">Ordenar A–Z</option>
+        </select>
+      </div>
+      <div class="active-filter" id="active-filter"></div>
+      <div id="inv-list"></div>
+    </section>
+
+    <section id="v-exp" hidden>
+      <div class="row-between">
+        <h2>Vencimientos</h2>
+        <label class="inline">Avisar con
+          <select id="f-days"><option>3</option><option selected>7</option><option>15</option><option>30</option><option>60</option></select>
+          días de anticipación</label>
+      </div>
+      <div id="exp-list"></div>
+    </section>
+
+    <section id="v-shop" hidden>
+      <div class="row-between">
+        <h2>Lista de compras</h2>
+        <button class="btn" data-act="copy-shop">📋 Copiar lista</button>
+      </div>
+      <p class="hint">Productos agotados o que llegaron al stock mínimo que les definiste.</p>
+      <div id="shop-list"></div>
+      <textarea id="shop-fallback" class="copy-fallback" readonly hidden></textarea>
+    </section>
+
+    <section id="v-cfg" hidden>
+      <div class="cfg-grid">
+        <div class="panel">
+          <h2>Categorías</h2>
+          <div id="cat-list"></div>
+          <form class="add-row" data-add="categories">
+            <input name="emoji" class="emo-in" maxlength="4" placeholder="🏷️">
+            <input name="name" placeholder="Nueva categoría" required>
+            <button class="btn">Agregar</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Lugares de guardado</h2>
+          <div id="loc-list"></div>
+          <form class="add-row" data-add="locations">
+            <input name="emoji" class="emo-in" maxlength="4" placeholder="📍">
+            <input name="name" placeholder="Nuevo lugar (ej. Alacena)" required>
+            <button class="btn">Agregar</button>
+          </form>
+        </div>
+      </div>
+      <div class="panel" id="seed-panel">
+        <h2>Empezar rápido</h2>
+        <p class="hint">Agrega categorías y lugares típicos de una casa (los que ya tengas no se duplican).</p>
+        <button class="btn" data-act="seed">✨ Cargar sugeridos</button>
+      </div>
+      <div class="panel" id="share-panel">
+        <h2>Compartir con tu hogar</h2>
+        <p class="hint">Mandale este link a quien viva con vos (por WhatsApp, por ejemplo). Al abrirlo queda conectado a esta misma despensa, sin crear cuentas. Quien tenga el link puede ver y editar todo, así que compartilo solo con tu hogar.</p>
+        <div class="add-row"><input id="share-link" readonly aria-label="Link para compartir"><button class="btn" data-act="copy-share">Copiar link</button></div>
+        <textarea id="share-fallback" class="copy-fallback" readonly hidden></textarea>
+        <h2 style="margin-top:22px">Invitar a otra casa</h2>
+        <p class="hint">Para alguien que quiere usar Despensify con <b>sus propios</b> productos. Al abrir este link se le crea una despensa nueva y vacía, separada de la tuya: no ve tus datos ni vos los suyos desde la app. Ojo: sus datos quedan guardados en tu proyecto de Supabase.</p>
+        <div class="add-row"><input id="invite-link" readonly aria-label="Link de invitación"><button class="btn" data-act="copy-invite">Copiar invitación</button></div>
+        <textarea id="invite-fallback" class="copy-fallback" readonly hidden></textarea>
+        <p class="hint" style="margin-top:12px">Para tenerla como una app en el celular: abrí el link y elegí “Agregar a pantalla de inicio” (Android: menú ⋮ de Chrome · iPhone: botón Compartir de Safari).</p>
+      </div>
+      <div class="panel">
+        <h2>Datos</h2>
+        <p class="hint" id="storage-note"></p>
+        <button class="btn" data-act="copy-backup">📋 Copiar respaldo (JSON)</button>
+        <textarea id="backup-fallback" class="copy-fallback" readonly hidden></textarea>
+        <details>
+          <summary>Importar un respaldo</summary>
+          <p class="hint">Pegá un respaldo copiado desde esta app o desde la versión anterior en Claude. Los productos se agregan a los que ya tenés.</p>
+          <textarea id="import-text" placeholder="{ &quot;items&quot;: [ … ] }" aria-label="Respaldo a importar"></textarea>
+          <button class="btn" data-act="import">Importar</button>
+        </details>
+        <p style="margin-top:16px"><button class="btn danger" data-act="disconnect">Desconectar este dispositivo</button></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<button class="fab" data-act="new" aria-label="Agregar producto">+</button>
+
+<div class="modal" id="modal" hidden>
+  <form class="sheet" id="item-form" autocomplete="off">
+    <h2 id="form-title">Nuevo producto</h2>
+    <div class="field"><label for="i-name">Producto</label><input id="i-name" required placeholder="Ej. Arroz, Leche, Atún…"></div>
+    <div class="grid2">
+      <div class="field"><label for="i-qty">Cantidad</label><input id="i-qty" type="number" min="0" step="any" inputmode="decimal" value="1"></div>
+      <div class="field"><label for="i-unit">Unidad</label><input id="i-unit" list="dl-unit" placeholder="unidades"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="i-cat">Categoría</label><input id="i-cat" list="dl-cat" placeholder="Elegí o escribí una nueva"></div>
+      <div class="field"><label for="i-loc">Dónde está guardado</label><input id="i-loc" list="dl-loc" placeholder="Elegí o escribí uno nuevo"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="i-exp">Vence el</label><input id="i-exp" type="date"></div>
+      <div class="field"><label for="i-min">Stock mínimo</label><input id="i-min" type="number" min="0" step="any" inputmode="decimal" placeholder="0"><small>Pasa a Compras al llegar a este número</small></div>
+    </div>
+    <div class="field"><label for="i-notes">Notas</label><textarea id="i-notes" placeholder="Marca, tamaño, lote…"></textarea></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn danger" id="btn-del" hidden>Eliminar</button>
+      <span class="sp"></span>
+      <button type="button" class="btn ghost" data-act="close">Cancelar</button>
+      <button type="button" class="btn" id="btn-another">Guardar y otro</button>
+      <button type="submit" class="btn primary">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<datalist id="dl-cat"></datalist>
+<datalist id="dl-loc"></datalist>
+<datalist id="dl-unit">
+  <option value="unidades"><option value="kg"><option value="g"><option value="L"><option value="ml">
+  <option value="paquetes"><option value="latas"><option value="frascos"><option value="botellas"><option value="cajas"><option value="bolsas"><option value="docenas">
+</datalist>
+<div id="toast"></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) && n > 0 ? Math.round(n * 1000) / 1000 : 0; };
+const fmtQ = n => Number(n || 0).toLocaleString('es-UY', {maximumFractionDigits: 2});
+const fmtDate = iso => new Date(iso + 'T00:00:00').toLocaleDateString('es-UY', {day: 'numeric', month: 'short', year: 'numeric'});
+const byName = (a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', {sensitivity: 'base'});
+
+const SUGGESTED = {
+  categories: [['🥫','Enlatados y conservas'],['🍝','Pastas, arroz y legumbres'],['🥛','Lácteos y huevos'],['🥩','Carnes y pescados'],['🥦','Frutas y verduras'],['🧂','Condimentos y aceites'],['🍪','Galletitas y snacks'],['☕','Desayuno e infusiones'],['🥤','Bebidas'],['🧊','Congelados'],['🍞','Panificados'],['🧴','Limpieza'],['🧻','Higiene personal']],
+  locations: [['🗄️','Alacena'],['🧊','Heladera'],['❄️','Freezer'],['🧺','Despensa'],['🚿','Baño'],['🧹','Lavadero']]
+};
+
+const S = {items: [], categories: [], locations: []};
+const UI = {tab: 'inv', q: '', cat: '', loc: '', status: '', group: 'cat', soonDays: 7};
+let mode = 'loading', db = null, readOnly = false, editingId = null;
+
+try { const p = JSON.parse(localStorage.getItem('despensa-ui') || '{}'); if (p.group) UI.group = p.group; if (p.soonDays) UI.soonDays = p.soonDays; } catch (e) {}
+const saveUI = () => { try { localStorage.setItem('despensa-ui', JSON.stringify({group: UI.group, soonDays: UI.soonDays})); } catch (e) {} };
+
+/* ---------- storage (Supabase) ---------- */
+const CFG_KEY = 'despensify-cfg', CACHE_KEY = 'despensify-cache';
+let CFG = null;
+const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64d = t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, '+').replace(/_/g, '/')))));
+const validCfg = c => c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10 && typeof c.c === 'string' && c.c.length >= 16;
+
+let INVITE = null;
+function readInvite() {
+  try {
+    const p = new URLSearchParams(location.search).get('i'); if (!p) return null;
+    const c = b64d(p); if (c && typeof c.u === 'string' && /^https:\/\//.test(c.u) && typeof c.k === 'string' && c.k.length > 10) return {u: c.u, k: c.k};
+  } catch (e) {}
+  return null;
+}
+const inviteLink = () => location.origin + location.pathname + '?i=' + b64e({u: CFG.u, k: CFG.k});
+function readCfg() {
+  try {
+    const p = new URLSearchParams(location.search).get('s');
+    if (p) { const c = b64d(p); if (validCfg(c)) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch (e) {} return c; } }
+  } catch (e) {}
+  try { const c = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); if (validCfg(c)) return c; } catch (e) {}
+  return null;
+}
+const shareLink = () => location.origin + location.pathname + '?s=' + b64e({u: CFG.u, k: CFG.k, c: CFG.c});
+// keep the config in the address bar so "Add to home screen" opens this same pantry
+function stampUrl() { try { history.replaceState(null, '', shareLink()); } catch (e) {} }
+
+function loadCache() {
+  try { const d = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (d && d.c === CFG.c) { S.items = d.items || []; S.categories = d.categories || []; S.locations = d.locations || []; return true; } } catch (e) {}
+  return false;
+}
+function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({c: CFG.c, items: S.items, categories: S.categories, locations: S.locations})); } catch (e) {} }
+
+function setSync(text, cls) { const el = $('#sync'); el.textContent = text; el.className = 'sync ' + (cls || ''); el.hidden = !text; }
+
+async function rpc(cfg, fn, args) {
+  const h = {'Content-Type': 'application/json', 'apikey': cfg.k};
+  if (!cfg.k.startsWith('sb_')) h.Authorization = 'Bearer ' + cfg.k; // legacy anon JWT
+  const r = await fetch(cfg.u.replace(/\/+$/, '') + '/rest/v1/rpc/' + fn, {method: 'POST', headers: h, body: JSON.stringify(args)});
+  const t = await r.text();
+  if (!r.ok) { let msg = t; try { msg = JSON.parse(t).message || t; } catch (e) {} const err = new Error(msg); err.status = r.status; throw err; }
+  return t ? JSON.parse(t) : null;
+}
+
+const pending = new Map(), deleted = new Set(), chains = {};
+let pulling = false;
+async function pull() {
+  if (!CFG || pulling) return; pulling = true;
+  try {
+    const rows = await rpc(CFG, 'despensa_leer', {p_casa: CFG.c}) || [];
+    const next = {items: [], categories: [], locations: []};
+    for (const r of rows) {
+      if (!next[r.coll] || !r.data || typeof r.data !== 'object') continue;
+      const key = r.coll + '/' + r.id;
+      if (deleted.has(key) || pending.has(key)) continue;
+      next[r.coll].push(Object.assign({}, r.data, {id: r.id}));
+    }
+    for (const c of ['items', 'categories', 'locations']) for (const x of S[c]) if (pending.has(c + '/' + x.id)) next[c].push(x);
+    S.items = next.items; S.categories = next.categories; S.locations = next.locations;
+    saveCache(); mode = 'remote'; setSync('Sincronizado', 'ok'); render();
+  } catch (e) {
+    setSync(navigator.onLine === false ? 'Sin conexión: mostrando lo último guardado' : 'No se pudo sincronizar', 'warn');
+    if (mode === 'loading') { mode = 'error'; render(); }
+  } finally { pulling = false; }
+}
+
+function queue(coll, id, fn) {
+  const key = coll + '/' + id;
+  pending.set(key, (pending.get(key) || 0) + 1);
+  const run = async () => {
+    for (let a = 0; a < 3; a++) {
+      try { await fn(); setSync('Sincronizado', 'ok'); return true; }
+      catch (e) {
+        if (a === 2 || (e.status && e.status < 500 && e.status !== 429)) { setSync('Hay cambios sin guardar', 'bad'); toast('No se pudo guardar en la nube. Revisá la conexión.'); return false; }
+        await new Promise(r => setTimeout(r, 800 * (a + 1)));
+      }
+    }
+  };
+  chains[key] = (chains[key] || Promise.resolve()).then(run).finally(() => {
+    const n = (pending.get(key) || 1) - 1; if (n <= 0) pending.delete(key); else pending.set(key, n);
+  });
+  return chains[key];
+}
+function put(coll, obj) {
+  const arr = S[coll]; const i = arr.findIndex(x => x.id === obj.id);
+  if (i >= 0) arr[i] = obj; else arr.push(obj);
+  saveCache(); render();
+  const {id, ...data} = obj;
+  const body = JSON.parse(JSON.stringify(data));
+  return queue(coll, id, () => rpc(CFG, 'despensa_guardar', {p_casa: CFG.c, p_coll: coll, p_id: id, p_data: body}));
+}
+function remove(coll, id) {
+  S[coll] = S[coll].filter(x => x.id !== id); deleted.add(coll + '/' + id);
+  saveCache(); render();
+  return queue(coll, id, () => rpc(CFG, 'despensa_borrar', {p_casa: CFG.c, p_coll: coll, p_id: id}));
+}
+
+function randomCode() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const a = new Uint32Array(24); crypto.getRandomValues(a);
+  return Array.from(a, n => abc[n % abc.length]).join('');
+}
+
+async function setupSave() {
+  const msg = $('#setup-msg');
+  const cfg = {u: $('#s-url').value.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, ''), k: $('#s-key').value.trim(), c: $('#s-code').value.trim()};
+  const say = (t, cls) => { msg.textContent = t; msg.className = 'setup-msg ' + (cls || ''); };
+  if (!/^https:\/\/\S+$/.test(cfg.u)) return say('La URL tiene que empezar con https:// (ej. https://xxxxxxxx.supabase.co).', 'bad');
+  if (cfg.k.length < 20) return say('Falta la clave pública.', 'bad');
+  if (!/^[A-Za-z0-9_-]{16,}$/.test(cfg.c)) return say('El código de la casa tiene que tener al menos 16 letras o números.', 'bad');
+  say('Probando la conexión…');
+  const failTitle = () => { $('#setup-title').textContent = 'Configurar Despensify'; };
+  try { await rpc(cfg, 'despensa_leer', {p_casa: cfg.c}); }
+  catch (e) {
+    failTitle();
+    if (e.status === 404) return say('Me conecté, pero no encontré las funciones de la despensa. ¿Corriste el archivo setup.sql en el SQL Editor de Supabase?', 'bad');
+    if (e.status === 401 || e.status === 403) return say('Supabase rechazó la clave. Revisá que sea la clave pública (publishable o anon), no la secreta.', 'bad');
+    if (e.status) return say('Supabase respondió con un error: ' + e.message, 'bad');
+    return say('No pude conectarme a esa URL. Revisá que esté bien copiada y que el proyecto esté activo.', 'bad');
+  }
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  say('¡Listo!', 'ok');
+  if (INVITE) setTimeout(() => toast('¡Bienvenido! Esta es tu despensa, empieza vacía.'), 400);
+  start(cfg);
+}
+
+let started = false;
+function start(cfg) {
+  CFG = cfg; stampUrl();
+  mode = loadCache() ? 'remote' : 'loading';
+  setSync('Conectando…'); render(); pull();
+  if (started) return; started = true;
+  setInterval(() => { if (document.visibilityState === 'visible') pull(); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); });
+  window.addEventListener('online', pull);
+}
+
+async function init() {
+  INVITE = readInvite();
+  const cfg = readCfg();
+  if (cfg) {
+    if (INVITE) setTimeout(() => toast('Este dispositivo ya tiene una despensa, así que se abrió esa.'), 600);
+    start(cfg); return;
+  }
+  mode = 'setup'; setSync(''); $('#s-code').value = randomCode();
+  if (INVITE) {
+    // invited by another household: create a fresh, empty pantry automatically
+    $('#s-url').value = INVITE.u; $('#s-key').value = INVITE.k;
+    $('#setup-title').textContent = 'Creando tu despensa…';
+    render(); setupSave(); return;
+  }
+  render();
+}
+
+/* ---------- derived ---------- */
+const catOf = it => S.categories.find(c => c.id === it.categoryId);
+const locOf = it => S.locations.find(l => l.id === it.locationId);
+function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function daysLeft(it) { if (!it.expiry) return null; return Math.round((new Date(it.expiry + 'T00:00:00') - startOfToday()) / 864e5); }
+function expInfo(it) {
+  const d = daysLeft(it); if (d === null || isNaN(d)) return null;
+  if (d < 0) return {cls: 'bad', key: 'exp', label: d === -1 ? 'Venció ayer' : `Venció hace ${-d} días`};
+  if (d === 0) return {cls: 'bad', key: 'soon', label: 'Vence hoy'};
+  if (d <= UI.soonDays) return {cls: 'warn', key: 'soon', label: d === 1 ? 'Vence mañana' : `Vence en ${d} días`};
+  return {cls: 'ok', key: 'ok', label: 'Vence ' + fmtDate(it.expiry)};
+}
+const isOut = it => (+it.quantity || 0) <= 0;
+const isLow = it => isOut(it) || ((+it.minQty || 0) > 0 && (+it.quantity || 0) <= +it.minQty);
+const isExpired = it => { const d = daysLeft(it); return d !== null && d < 0; };
+const isSoon = it => { const d = daysLeft(it); return d !== null && d >= 0 && d <= UI.soonDays; };
+
+/* ---------- render ---------- */
+function itemHTML(it, opts = {}) {
+  const c = catOf(it), l = locOf(it), e = expInfo(it);
+  const meta = [];
+  if (opts.showCat !== false && c) meta.push(`<span class="chip">${esc(c.emoji || '🏷️')} ${esc(c.name)}</span>`);
+  if (opts.showLoc !== false && l) meta.push(`<span class="chip">${esc(l.emoji || '📍')} ${esc(l.name)}</span>`);
+  if (e) meta.push(`<span class="badge ${e.cls}">${esc(e.label)}</span>`);
+  if (isOut(it)) meta.push(`<span class="badge low">Agotado</span>`);
+  else if (isLow(it)) meta.push(`<span class="badge low">Stock bajo</span>`);
+  const dis = readOnly ? 'disabled' : '';
+  return `<div class="item ${isOut(it) ? 'out' : ''}">
+    <button class="item-main" data-edit="${esc(it.id)}" title="Editar">
+      <div class="item-name">${esc(it.name)}</div>
+      ${meta.length ? `<div class="item-meta">${meta.join('')}</div>` : ''}
+    </button>
+    <div class="qty">
+      <button data-dec="${esc(it.id)}" ${dis} aria-label="Restar">−</button>
+      <div class="v">${fmtQ(it.quantity)}<small>${esc(it.unit || 'u.')}</small></div>
+      <button data-inc="${esc(it.id)}" ${dis} aria-label="Sumar">+</button>
+    </div>
+  </div>`;
+}
+
+function groupHTML(title, emo, items, opts) {
+  return `<div class="group"><div class="group-h">${emo ? `<span class="emo">${esc(emo)}</span>` : ''}<span>${esc(title)}</span><span class="c">${items.length}</span></div>
+    <div class="list">${items.map(i => itemHTML(i, opts)).join('')}</div></div>`;
+}
+
+function fillSelect(sel, list, allLabel) {
+  const cur = sel.value;
+  const hasNone = S.items.some(it => !(allLabel.includes('categor') ? catOf(it) : locOf(it)));
+  sel.innerHTML = `<option value="">${allLabel}</option>` +
+    [...list].sort(byName).map(x => `<option value="${esc(x.id)}">${esc((x.emoji || '') + ' ' + x.name)}</option>`).join('') +
+    (hasNone ? `<option value="_none">Sin asignar</option>` : '');
+  sel.value = [...sel.options].some(o => o.value === cur) ? cur : '';
+}
+
+function renderInv() {
+  const statsDef = [
+    ['', '', 'Productos', S.items.length],
+    ['exp', 'bad', 'Vencidos', S.items.filter(isExpired).length],
+    ['soon', 'warn', `Vencen en ≤${UI.soonDays} días`, S.items.filter(isSoon).length],
+    ['low', 'low', 'Agotados o bajos', S.items.filter(isLow).length],
+  ];
+  $('#stats').innerHTML = statsDef.map(([k, cls, l, n]) =>
+    `<button class="stat ${cls} ${UI.status === k && k ? 'sel' : ''}" data-status="${k}"><div class="n">${n}</div><div class="l">${l}</div></button>`).join('');
+
+  fillSelect($('#f-cat'), S.categories, 'Todas las categorías');
+  fillSelect($('#f-loc'), S.locations, 'Todos los lugares');
+  UI.cat = $('#f-cat').value; UI.loc = $('#f-loc').value;
+  $('#f-group').value = UI.group;
+
+  const statusLabels = {exp: 'Vencidos', soon: `Vencen en ≤${UI.soonDays} días`, low: 'Agotados o bajos'};
+  $('#active-filter').innerHTML = UI.status ? `<span class="pill">${statusLabels[UI.status]}<button data-status="" aria-label="Quitar filtro">×</button></span>` : '';
+
+  const q = norm(UI.q);
+  let list = S.items.filter(it => {
+    if (q && !norm(it.name).includes(q) && !norm(it.notes).includes(q)) return false;
+    if (UI.cat) { const c = catOf(it); if (UI.cat === '_none' ? c : (!c || c.id !== UI.cat)) return false; }
+    if (UI.loc) { const l = locOf(it); if (UI.loc === '_none' ? l : (!l || l.id !== UI.loc)) return false; }
+    if (UI.status === 'exp' && !isExpired(it)) return false;
+    if (UI.status === 'soon' && !isSoon(it)) return false;
+    if (UI.status === 'low' && !isLow(it)) return false;
+    return true;
+  });
+
+  const el = $('#inv-list');
+  if (!S.items.length) {
+    el.innerHTML = mode === 'loading' ? `<div class="empty">Cargando…</div>` : mode === 'error' ? `<div class="empty"><div class="big">📡</div><h3>No se pudo conectar</h3><div>Revisá tu conexión a internet. Si sigue sin andar, puede que el proyecto de Supabase esté en pausa.</div><div class="btns"><button class="btn" data-act="retry">Reintentar</button></div></div>` :
+    `<div class="empty"><div class="big">🧺</div><h3>Tu despensa está vacía</h3>
+      <div>Agregá tu primer producto. Podés crear categorías y lugares mientras cargás.</div>
+      <div class="btns">${readOnly ? '' : `<button class="btn primary" data-act="new">+ Agregar producto</button>`}
+      ${!S.categories.length && !readOnly ? `<button class="btn" data-act="seed">✨ Cargar categorías y lugares sugeridos</button>` : ''}</div></div>`;
+    return;
+  }
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="big">🔍</div><h3>Nada coincide</h3><div>Probá con otro filtro o búsqueda.</div></div>`; return; }
+
+  if (UI.group === 'exp') {
+    list.sort((a, b) => (a.expiry || '9999') < (b.expiry || '9999') ? -1 : (a.expiry || '9999') > (b.expiry || '9999') ? 1 : byName(a, b));
+    el.innerHTML = `<div class="list" style="margin-top:6px">${list.map(i => itemHTML(i)).join('')}</div>`;
+    return;
+  }
+  if (UI.group === 'name') {
+    list.sort(byName);
+    el.innerHTML = `<div class="list" style="margin-top:6px">${list.map(i => itemHTML(i)).join('')}</div>`;
+    return;
+  }
+  const isCat = UI.group === 'cat';
+  const refs = [...(isCat ? S.categories : S.locations)].sort(byName);
+  const get = isCat ? catOf : locOf;
+  let html = '';
+  for (const r of refs) {
+    const g = list.filter(it => get(it) === r).sort(byName);
+    if (g.length) html += groupHTML(r.name, r.emoji, g, isCat ? {showCat: false} : {showLoc: false});
+  }
+  const none = list.filter(it => !get(it)).sort(byName);
+  if (none.length) html += groupHTML(isCat ? 'Sin categoría' : 'Sin lugar asignado', '·', none, {});
+  el.innerHTML = html;
+}
+
+function renderExp() {
+  const withDate = S.items.filter(it => it.expiry && (+it.quantity || 0) > 0);
+  const sortE = arr => arr.sort((a, b) => a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : byName(a, b));
+  const expired = sortE(withDate.filter(isExpired));
+  const soon = sortE(withDate.filter(isSoon));
+  const later = sortE(withDate.filter(it => daysLeft(it) > UI.soonDays)).slice(0, 12);
+  let html = '';
+  if (expired.length) html += `<div class="sub-h">🔴 Vencidos (${expired.length})</div><div class="list">${expired.map(i => itemHTML(i)).join('')}</div>`;
+  if (soon.length) html += `<div class="sub-h">🟠 Próximos ${UI.soonDays} días (${soon.length})</div><div class="list">${soon.map(i => itemHTML(i)).join('')}</div>`;
+  if (!expired.length && !soon.length) html += `<div class="empty"><div class="big">✅</div><h3>Nada por vencer</h3><div>No hay productos vencidos ni que venzan en los próximos ${UI.soonDays} días.</div></div>`;
+  if (later.length) html += `<div class="sub-h">Después</div><div class="list">${later.map(i => itemHTML(i)).join('')}</div>`;
+  const noDate = S.items.filter(it => !it.expiry).length;
+  if (noDate) html += `<p class="hint" style="margin-top:16px">${noDate} producto${noDate > 1 ? 's' : ''} sin fecha de vencimiento cargada.</p>`;
+  $('#exp-list').innerHTML = html;
+  $('#f-days').value = String(UI.soonDays);
+}
+
+function shopItems() { return S.items.filter(isLow).sort(byName); }
+function renderShop() {
+  const list = shopItems();
+  if (!list.length) { $('#shop-list').innerHTML = `<div class="empty"><div class="big">🛒</div><h3>No falta nada</h3><div>Definí un “stock mínimo” en cada producto para que aparezca acá cuando se esté acabando.</div></div>`; return; }
+  let html = '';
+  const refs = [...S.categories].sort(byName);
+  for (const c of refs) { const g = list.filter(it => catOf(it) === c); if (g.length) html += groupHTML(c.name, c.emoji, g, {showCat: false}); }
+  const none = list.filter(it => !catOf(it)); if (none.length) html += groupHTML('Otros', '·', none, {});
+  $('#shop-list').innerHTML = html;
+}
+function shopText() {
+  const list = shopItems();
+  return 'Lista de compras\n' + list.map(it => {
+    const need = Math.max((+it.minQty || 0) - (+it.quantity || 0), 0);
+    return `• ${it.name}${need > 0 ? ` (faltan ~${fmtQ(need)} ${it.unit || ''})`.replace(/\s+\)/, ')') : ''}`;
+  }).join('\n');
+}
+
+function refRows(coll) {
+  const list = [...S[coll]].sort(byName);
+  const field = coll === 'categories' ? 'categoryId' : 'locationId';
+  if (!list.length) return `<p class="hint">Todavía no hay ${coll === 'categories' ? 'categorías' : 'lugares'}.</p>`;
+  const dis = readOnly ? 'disabled' : '';
+  return list.map(r => {
+    const n = S.items.filter(it => it[field] === r.id).length;
+    return `<div class="cfg-row" data-coll="${coll}" data-id="${esc(r.id)}">
+      <input class="emo-in" data-field="emoji" value="${esc(r.emoji || '')}" maxlength="4" ${dis} aria-label="Ícono">
+      <input class="nm" data-field="name" value="${esc(r.name)}" ${dis} aria-label="Nombre">
+      <span class="count">${n} prod.</span>
+      ${readOnly ? '' : `<button class="icon-btn" data-delref aria-label="Eliminar">✕</button>`}
+    </div>`;
+  }).join('');
+}
+function renderCfg() {
+  const act = document.activeElement;
+  if (!(act && act.closest && act.closest('#cat-list'))) $('#cat-list').innerHTML = refRows('categories');
+  if (!(act && act.closest && act.closest('#loc-list'))) $('#loc-list').innerHTML = refRows('locations');
+  document.querySelectorAll('.add-row').forEach(f => f.hidden = readOnly);
+  $('#seed-panel').hidden = readOnly;
+  $('#storage-note').textContent = 'Los datos se guardan en tu proyecto de Supabase y se sincronizan cada pocos segundos entre todos los dispositivos conectados. Copiá un respaldo de vez en cuando por las dudas.';
+  if (CFG) { $('#share-link').value = shareLink(); $('#invite-link').value = inviteLink(); }
+}
+
+function render() {
+  const setup = mode === 'setup';
+  $('#v-setup').hidden = !setup; $('#tabs').hidden = setup;
+  ['inv', 'exp', 'shop', 'cfg'].forEach(t => $('#v-' + t).hidden = setup || UI.tab !== t);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
+  const expN = S.items.filter(it => (+it.quantity || 0) > 0 && (isExpired(it) || isSoon(it))).length;
+  $('#b-exp').textContent = expN || '';
+  const lowN = S.items.filter(isLow).length;
+  $('#b-shop').textContent = lowN || '';
+  document.querySelectorAll('[data-act="new"]').forEach(b => b.hidden = readOnly || setup);
+  if (setup) return;
+  $('#dl-cat').innerHTML = [...S.categories].sort(byName).map(c => `<option value="${esc(c.name)}">`).join('');
+  $('#dl-loc').innerHTML = [...S.locations].sort(byName).map(c => `<option value="${esc(c.name)}">`).join('');
+  if (UI.tab === 'inv') renderInv();
+  if (UI.tab === 'exp') renderExp();
+  if (UI.tab === 'shop') renderShop();
+  if (UI.tab === 'cfg') renderCfg();
+}
+
+/* ---------- actions ---------- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+
+const qtyTimers = {};
+function adjust(id, delta) {
+  if (readOnly) return;
+  const it = S.items.find(x => x.id === id); if (!it) return;
+  it.quantity = Math.max(0, Math.round(((+it.quantity || 0) + delta) * 1000) / 1000);
+  render();
+  clearTimeout(qtyTimers[id]);
+  qtyTimers[id] = setTimeout(() => { const cur = S.items.find(x => x.id === id) || it; put('items', Object.assign({}, cur, {quantity: it.quantity, updatedAt: new Date().toISOString()})); }, 450);
+}
+
+async function resolveRef(coll, name, defEmoji) {
+  name = String(name || '').trim(); if (!name) return '';
+  const found = S[coll].find(x => norm(x.name) === norm(name));
+  if (found) return found.id;
+  const sug = SUGGESTED[coll].find(([, n]) => norm(n) === norm(name));
+  const obj = {id: uid(), name, emoji: sug ? sug[0] : defEmoji};
+  if (mode === 'remote') S[coll].push(obj); // so a second lookup in the same save finds it
+  await put(coll, obj);
+  return obj.id;
+}
+
+function openForm(id) {
+  if (readOnly && !id) return;
+  editingId = id || null;
+  const it = id ? S.items.find(x => x.id === id) : null;
+  $('#form-title').textContent = it ? 'Editar producto' : 'Nuevo producto';
+  $('#i-name').value = it ? it.name : '';
+  $('#i-qty').value = it ? (it.quantity ?? 0) : 1;
+  $('#i-unit').value = it ? (it.unit || '') : '';
+  $('#i-cat').value = it ? ((catOf(it) || {}).name || '') : (UI.cat && UI.cat !== '_none' ? ((S.categories.find(c => c.id === UI.cat) || {}).name || '') : '');
+  $('#i-loc').value = it ? ((locOf(it) || {}).name || '') : (UI.loc && UI.loc !== '_none' ? ((S.locations.find(c => c.id === UI.loc) || {}).name || '') : '');
+  $('#i-exp').value = it ? (it.expiry || '') : '';
+  $('#i-min').value = it && it.minQty ? it.minQty : '';
+  $('#i-notes').value = it ? (it.notes || '') : '';
+  const del = $('#btn-del'); del.hidden = !it || readOnly; del.classList.remove('confirm'); del.textContent = 'Eliminar';
+  $('#btn-another').hidden = !!it || readOnly;
+  $('#item-form').querySelectorAll('input,textarea,button[type=submit]').forEach(e => e.disabled = readOnly);
+  $('#modal').hidden = false;
+  if (!readOnly) setTimeout(() => $('#i-name').focus(), 50);
+}
+function closeForm() { $('#modal').hidden = true; editingId = null; }
+
+async function saveForm(another) {
+  if (readOnly) return;
+  const name = $('#i-name').value.trim();
+  if (!name) { $('#i-name').focus(); toast('Poné el nombre del producto'); return; }
+  const prev = editingId ? S.items.find(x => x.id === editingId) : null;
+  const catId = await resolveRef('categories', $('#i-cat').value, '🏷️');
+  const locId = await resolveRef('locations', $('#i-loc').value, '📍');
+  const now = new Date().toISOString();
+  const it = {
+    id: editingId || uid(), name,
+    quantity: num($('#i-qty').value), unit: $('#i-unit').value.trim(),
+    categoryId: catId, locationId: locId,
+    expiry: $('#i-exp').value || '', minQty: num($('#i-min').value),
+    notes: $('#i-notes').value.trim(),
+    createdAt: prev && prev.createdAt || now, updatedAt: now
+  };
+  put('items', it);
+  toast(prev ? 'Producto actualizado' : `“${name}” agregado`);
+  if (another) {
+    const keepCat = $('#i-cat').value, keepLoc = $('#i-loc').value;
+    openForm(null); $('#i-cat').value = keepCat; $('#i-loc').value = keepLoc;
+  } else closeForm();
+}
+
+async function seed() {
+  if (readOnly) return;
+  let n = 0;
+  for (const coll of ['categories', 'locations']) {
+    for (const [emoji, name] of SUGGESTED[coll]) {
+      if (S[coll].some(x => norm(x.name) === norm(name))) continue;
+      const obj = {id: uid(), name, emoji};
+      if (mode === 'remote') S[coll].push(obj);
+      put(coll, obj); n++;
+    }
+  }
+  render();
+  toast(n ? `Se agregaron ${n} categorías y lugares` : 'Ya tenías todos los sugeridos');
+}
+
+function importBackup() {
+  let d;
+  try { d = JSON.parse($('#import-text').value); } catch (e) { toast('Ese texto no es un respaldo válido'); return; }
+  let n = 0;
+  for (const coll of ['categories', 'locations', 'items']) {
+    for (const x of (Array.isArray(d && d[coll]) ? d[coll] : [])) {
+      if (!x || typeof x !== 'object' || typeof x.name !== 'string' || !x.name.trim()) continue;
+      const id = typeof x.id === 'string' && /^[\w-]{1,80}$/.test(x.id) ? x.id : uid();
+      put(coll, Object.assign({}, x, {id})); if (coll === 'items') n++;
+    }
+  }
+  $('#import-text').value = '';
+  toast(n ? `Se importaron ${n} productos` : 'No encontré productos en el respaldo');
+}
+
+async function copyText(text, fallbackSel) {
+  try { await navigator.clipboard.writeText(text); toast('Copiado al portapapeles'); $(fallbackSel).hidden = true; }
+  catch (e) { const t = $(fallbackSel); t.value = text; t.hidden = false; t.focus(); t.select(); toast('Seleccioná y copiá el texto'); }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .stat'); if (!t) return;
+  if (t.dataset.tab) { UI.tab = t.dataset.tab; render(); window.scrollTo({top: 0}); return; }
+  if (t.dataset.inc) return adjust(t.dataset.inc, 1);
+  if (t.dataset.dec) return adjust(t.dataset.dec, -1);
+  if (t.dataset.edit) return openForm(t.dataset.edit);
+  if (t.dataset.status !== undefined && (t.classList.contains('stat') || t.closest('.pill'))) {
+    UI.status = (UI.status === t.dataset.status) ? '' : t.dataset.status; render(); return;
+  }
+  if (t.hasAttribute('data-delref')) {
+    const row = t.closest('.cfg-row');
+    if (!t.classList.contains('confirm')) { t.classList.add('confirm'); t.textContent = '¿Eliminar?'; setTimeout(() => { t.classList.remove('confirm'); t.textContent = '✕'; }, 3000); return; }
+    remove(row.dataset.coll, row.dataset.id); toast('Eliminado. Sus productos quedan sin asignar.'); return;
+  }
+  const act = t.dataset.act;
+  if (act === 'new') return openForm(null);
+  if (act === 'close') return closeForm();
+  if (act === 'seed') return seed();
+  if (act === 'copy-shop') return copyText(shopText(), '#shop-fallback');
+  if (act === 'setup-save') return setupSave();
+  if (act === 'retry') { mode = 'loading'; render(); return pull(); }
+  if (act === 'copy-share') return copyText(shareLink(), '#share-fallback');
+  if (act === 'copy-invite') return copyText(inviteLink(), '#invite-fallback');
+  if (act === 'import') return importBackup();
+  if (act === 'disconnect') {
+    if (!t.classList.contains('confirm')) { t.classList.add('confirm'); t.textContent = '¿Seguro? Desconectar'; setTimeout(() => { t.classList.remove('confirm'); t.textContent = 'Desconectar este dispositivo'; }, 4000); return; }
+    try { localStorage.removeItem(CFG_KEY); localStorage.removeItem(CACHE_KEY); } catch (e) {}
+    location.href = location.pathname; return;
+  }
+  if (act === 'copy-backup') return copyText(JSON.stringify({exportado: new Date().toISOString(), ...S}, null, 2), '#backup-fallback');
+});
+
+$('#btn-del').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = '¿Seguro? Eliminar'; return; }
+  const id = editingId; closeForm(); remove('items', id); toast('Producto eliminado');
+});
+$('#btn-another').addEventListener('click', () => saveForm(true));
+$('#item-form').addEventListener('submit', e => { e.preventDefault(); saveForm(false); });
+$('#modal').addEventListener('mousedown', e => { if (e.target.id === 'modal') closeForm(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeForm(); });
+
+$('#f-q').addEventListener('input', e => { UI.q = e.target.value; renderInv(); });
+$('#f-cat').addEventListener('change', e => { UI.cat = e.target.value; renderInv(); });
+$('#f-loc').addEventListener('change', e => { UI.loc = e.target.value; renderInv(); });
+$('#f-group').addEventListener('change', e => { UI.group = e.target.value; saveUI(); renderInv(); });
+$('#f-days').addEventListener('change', e => { UI.soonDays = +e.target.value; saveUI(); render(); });
+
+document.addEventListener('change', e => {
+  const inp = e.target.closest('.cfg-row input'); if (!inp || readOnly) return;
+  const row = inp.closest('.cfg-row');
+  const r = S[row.dataset.coll].find(x => x.id === row.dataset.id); if (!r) return;
+  const v = inp.value.trim();
+  if (inp.dataset.field === 'name' && !v) { inp.value = r.name; return; }
+  if ((r[inp.dataset.field] || '') === v) return;
+  put(row.dataset.coll, Object.assign({}, r, {[inp.dataset.field]: v}));
+  toast('Guardado');
+});
+document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.cfg-row')) setTimeout(() => { if (UI.tab === 'cfg' && !document.activeElement.closest('.cfg-row')) renderCfg(); }, 0); });
+
+document.querySelectorAll('.add-row').forEach(f => f.addEventListener('submit', e => {
+  e.preventDefault(); if (readOnly) return;
+  const coll = f.dataset.add, name = f.elements.name.value.trim(); if (!name) return;
+  if (S[coll].some(x => norm(x.name) === norm(name))) { toast('Ya existe'); return; }
+  const obj = {id: uid(), name, emoji: f.elements.emoji.value.trim() || (coll === 'categories' ? '🏷️' : '📍')};
+  put(coll, obj); f.reset(); f.elements.name.focus(); toast('Agregado');
+}));
+
+// refresh "vence en N días" at midnight-ish
+setInterval(() => { if ($('#modal').hidden) render(); }, 30 * 60 * 1000);
+
+init();
+})();
+</script>
+</body>
+</html>
