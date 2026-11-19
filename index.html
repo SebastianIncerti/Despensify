@@ -154,6 +154,14 @@ main{padding:18px 0 110px}
 .field textarea{min-height:60px;resize:vertical}
 .sheet-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .sheet-actions .sp{flex:1}
+@media (max-width:520px){
+  #item-form .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #item-form .sheet-actions .sp{display:none}
+  #item-form .sheet-actions .btn{width:100%;min-height:46px}
+  #item-form .sheet-actions button[type=submit]{order:1;grid-column:1/-1}
+  #item-form .sheet-actions [data-act=close]{order:2}
+  #item-form #btn-another,#item-form #btn-del{order:3}
+}
 @keyframes fade{from{opacity:0}}
 @keyframes rise{from{transform:translateY(14px);opacity:0}}
 
@@ -509,13 +517,27 @@ function deviceId() {
   try { let d = localStorage.getItem('despensify-dispositivo'); if (!d) { d = randomCode(); localStorage.setItem('despensify-dispositivo', d); } return d; }
   catch (e) { return null; }
 }
+// e.g. "Chrome · Windows", "App instalada · iPhone" (from the browser, no personal data)
+function deviceType() {
+  const ua = navigator.userAgent || '';
+  let standalone = false;
+  try { standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) {}
+  const os = /iPhone|iPod/.test(ua) ? 'iPhone' : (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) ? 'iPad'
+    : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS'
+    : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Otro sistema';
+  const br = /Electron/.test(ua) ? 'App de escritorio' : /FBAN|FBAV|Instagram/.test(ua) ? 'Navegador de Facebook/Instagram'
+    : /Edg(e|A|iOS)?\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet'
+    : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /; wv\)/.test(ua) ? 'Navegador dentro de una app'
+    : /CriOS|Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'Navegador';
+  return (standalone ? 'App instalada' : br) + ' · ' + os;
+}
 function visit() {
   if (!CFG) return;
   const n = new Date(), key = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate() + '|' + CFG.c;
   if (visited.has(key)) return;
   const dev = deviceId(); if (!dev) return;
   visited.add(key);
-  rpc(CFG, 'despensa_visita', {p_casa: CFG.c, p_dispositivo: dev}).catch(() => {});
+  rpc(CFG, 'despensa_visita', {p_casa: CFG.c, p_dispositivo: dev, p_tipo: deviceType()}).catch(() => {});
 }
 
 function randomCode() {

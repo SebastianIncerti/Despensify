@@ -70,6 +70,16 @@ th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #f0eadc;white-spa
 th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 td code{font-size:.85rem;background:#f1ebde;border-radius:6px;padding:1px 6px}
+.devbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 10px;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums;min-height:30px}
+.devbtn:hover{border-color:#cfc5ae}
+.devbtn[aria-expanded=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+tr.devrow td{background:#faf6ee;white-space:normal;padding:4px 10px 10px}
+.devlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.devlist li{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:8px 4px;border-bottom:1px solid #efe8da}
+.devlist li:last-child{border-bottom:0}
+.devlist .t{font-weight:600;min-width:220px}
+.devlist .t.none{font-weight:500;color:var(--muted)}
+.devlist .d{font-size:.84rem;color:var(--ink2)}
 .badge-bad{color:var(--bad);font-weight:600}
 @media (max-width:820px){.charts{grid-template-columns:minmax(0,1fr)}}
 </style>
@@ -215,13 +225,33 @@ function renderDash() {
   const casas = DATA.casas_detalle || [];
   $('#casas-meta').textContent = `${fmt(casas.length)} en total`;
   $('#table-casas').innerHTML = casas.length ? `<table><thead><tr><th>Código</th><th>Desde</th><th>Última actividad</th><th class="num">Dispositivos</th><th class="num">Productos</th><th class="num">Vencidos</th><th class="num">Categorías</th><th class="num">Lugares</th></tr></thead><tbody>${
-    casas.map(c => `<tr><td><code>${esc(c.codigo)}</code></td><td>${esc(dFull(c.desde))}</td><td>${esc(dFull(c.ultima))}</td><td class="num">${fmt(c.dispositivos)}</td><td class="num">${fmt(c.productos)}</td><td class="num ${c.vencidos ? 'badge-bad' : ''}">${fmt(c.vencidos)}</td><td class="num">${fmt(c.categorias)}</td><td class="num">${fmt(c.lugares)}</td></tr>`).join('')
+    casas.map((c, i) => `<tr><td><code>${esc(c.codigo)}</code></td><td>${esc(dFull(c.desde))}</td><td>${esc(dFull(c.ultima))}</td><td class="num">${(c.dispositivos_detalle || []).length ? `<button class="devbtn" data-dev="${i}" aria-expanded="false" aria-controls="dev-${i}" title="Ver dispositivos">${fmt(c.dispositivos)} ▾</button>` : fmt(c.dispositivos)}</td><td class="num">${fmt(c.productos)}</td><td class="num ${c.vencidos ? 'badge-bad' : ''}">${fmt(c.vencidos)}</td><td class="num">${fmt(c.categorias)}</td><td class="num">${fmt(c.lugares)}</td></tr>${devRow(c, i)}`).join('')
   }</tbody></table>` : '<p class="hint">Todavía no hay casas.</p>';
 
   $('#tracking-note').textContent = r.actividad_desde
     ? `Los dispositivos y la actividad diaria se registran desde el ${dFull(r.actividad_desde)}. Las casas y productos anteriores sí están contados.`
     : 'Todavía no hay actividad registrada: los dispositivos se empiezan a contar la próxima vez que alguien abra la versión nueva de la app.';
 }
+
+const dTime = iso => { if (!iso) return '—'; const d = new Date(iso), today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const t = d.toLocaleTimeString('es-UY', {hour: '2-digit', minute: '2-digit'});
+  const hasTime = !(d.getHours() === 0 && d.getMinutes() === 0);
+  return sameDay ? (hasTime ? 'hoy ' + t : 'hoy') : d.toLocaleDateString('es-UY', {day: 'numeric', month: 'short'}) + (hasTime ? ' ' + t : ''); };
+function devRow(c, i) {
+  const list = c.dispositivos_detalle || [];
+  if (!list.length) return '';
+  return `<tr class="devrow" id="dev-${i}" hidden><td colspan="8"><ul class="devlist">${list.map(d => `<li>
+      <span class="t ${d.tipo ? '' : 'none'}">${d.tipo ? esc(d.tipo) : 'Tipo desconocido · se completa la próxima vez que abra la app'}</span>
+      <span class="d">Primer uso: ${esc(dTime(d.primera))}</span>
+      <span class="d">Último uso: ${esc(dTime(d.ultima))}</span>
+      <span class="d"><code>${esc(d.codigo)}</code></span></li>`).join('')}</ul></td></tr>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.devbtn'); if (!b) return;
+  const row = document.getElementById('dev-' + b.dataset.dev); if (!row) return;
+  const open = row.hidden; row.hidden = !open; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
 
 function niceMax(v) {
   if (v <= 4) return 4;
